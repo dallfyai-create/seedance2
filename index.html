@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seedance Studio — Shot Prompt Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#08090C;
+    --void-soft:#0B0D12;
+    --surface:#13151B;
+    --surface-raised:#1A1D26;
+    --glass: rgba(26,29,38,0.55);
+    --text:#EDEEF2;
+    --text-dim:#8B92A8;
+    --text-faint:#525868;
+    --violet:#7C5CFF;
+    --violet-soft:rgba(124,92,255,0.14);
+    --teal:#00E0B8;
+    --teal-soft:rgba(0,224,184,0.14);
+    --danger:#FF5C7A;
+    --danger-soft:rgba(255,92,122,0.14);
+    --line: rgba(237,238,242,0.08);
+    --line-strong: rgba(237,238,242,0.16);
+    --grad: linear-gradient(120deg, var(--violet), var(--teal));
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--void);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    background-image:
+      radial-gradient(900px 500px at 12% -8%, rgba(124,92,255,0.16), transparent 60%),
+      radial-gradient(800px 480px at 100% 10%, rgba(0,224,184,0.10), transparent 55%),
+      radial-gradient(1000px 700px at 50% 100%, rgba(124,92,255,0.06), transparent 60%);
+    background-attachment:fixed;
+  }
+  .stage{
+    max-width:1180px;
+    margin:0 auto;
+    padding:32px 20px 90px;
+  }
+
+  /* ===== HEADER ===== */
+  .studio-header{
+    border:1px solid var(--line-strong);
+    background: linear-gradient(155deg, rgba(124,92,255,0.10), rgba(0,224,184,0.05)), var(--glass);
+    backdrop-filter: blur(20px);
+    border-radius:20px;
+    padding:28px 30px;
+    margin-bottom:24px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
+  }
+  .studio-header::before{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(90deg, var(--violet), var(--teal));
+    height:2px; top:0; left:0; right:0;
+    opacity:0.8;
+  }
+  .studio-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    font-size:clamp(28px, 4vw, 40px);
+    color:var(--text);
+    line-height:1.05;
+    margin:0;
+  }
+  .studio-title span{
+    background:var(--grad);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .studio-sub{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:400;
+    color:var(--text-dim);
+    font-size:14.5px;
+    margin:8px 0 0;
+    max-width:540px;
+    line-height:1.55;
+  }
+  .studio-meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    letter-spacing:0.06em;
+    text-align:right;
+    line-height:2;
+    white-space:nowrap;
+  }
+  .studio-meta b{
+    background:var(--grad);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    font-weight:600;
+  }
+  .dev-credit{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin:0 0 12px;
+  }
+  .dev-credit::before{
+    content:'';
+    width:6px; height:6px; border-radius:50%;
+    background:var(--grad);
+    flex-shrink:0;
+  }
+
+  /* ===== LAYOUT ===== */
+  .deck{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 880px){
+    .deck{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px 26px;
+    margin-bottom:18px;
+    position:relative;
+    transition: border-color 0.2s;
+  }
+  .card:hover{ border-color: var(--line-strong); }
+  .card-label{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--text);
+    font-weight:600;
+    margin:0 0 6px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .card-label .num{
+    font-family:'JetBrains Mono',monospace;
+    background:var(--violet-soft);
+    border:1px solid rgba(124,92,255,0.35);
+    color:var(--violet);
+    font-size:10.5px;
+    padding:2px 8px;
+    border-radius:7px;
+    letter-spacing:0;
+    font-weight:600;
+  }
+  .card-desc{
+    font-family:'Space Grotesk', sans-serif;
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin:0 0 18px;
+    line-height:1.55;
+  }
+
+  .field-row{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    font-weight:600;
+  }
+  input[type=text], input[type=number], textarea, select{
+    background:rgba(8,9,12,0.6);
+    border:1px solid var(--line-strong);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:10px;
+    width:100%;
+    outline:none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  textarea{ resize:vertical; min-height:54px; line-height:1.5; font-family:'Space Grotesk',sans-serif; }
+  input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus{
+    border-color:var(--violet);
+    box-shadow: 0 0 0 3px var(--violet-soft);
+  }
+  input::placeholder, textarea::placeholder{ color:var(--text-faint); }
+  select{ appearance:none; cursor:pointer; }
+  .select-wrap{ position:relative; }
+  .select-wrap::after{
+    content:'⌄'; position:absolute; right:14px; top:13px;
+    color:var(--violet); pointer-events:none; font-size:14px; font-weight:700;
+  }
+
+  .chip-group{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    border:1px solid var(--line-strong);
+    background:rgba(255,255,255,0.02);
+    color:var(--text-dim);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:12px;
+    padding:7px 13px;
+    border-radius:20px;
+    cursor:pointer;
+    transition: all 0.15s;
+    white-space:nowrap;
+  }
+  .chip:hover{ border-color:var(--violet); color:var(--text); background:var(--violet-soft); }
+  .chip.active{
+    background:var(--grad);
+    border-color:transparent;
+    color:#08090C;
+    font-weight:600;
+  }
+
+  .subgroup-title{
+    font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-faint); margin:14px 0 7px; font-weight:600;
+  }
+
+  /* ===== SHOT LIST ===== */
+  .shot-card{
+    border:1px solid var(--line);
+    background: linear-gradient(160deg, rgba(124,92,255,0.05), rgba(0,224,184,0.02)), var(--surface-raised);
+    border-radius:16px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .shot-card::before{
+    content:'';
+    position:absolute; top:0; left:0; bottom:0; width:3px;
+    background:var(--grad);
+    opacity:0.7;
+  }
+  .shot-card-head{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+  }
+  .shot-card-head h4{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:14.5px; letter-spacing:-0.01em;
+    color:var(--text); margin:0; font-weight:600;
+  }
+  .shot-card-head h4 .n{
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin-right:8px;
+  }
+  .remove-btn{
+    background:none; border:1px solid rgba(255,92,122,0.4); color:var(--danger);
+    font-size:10.5px; letter-spacing:0.04em;
+    padding:5px 11px; border-radius:8px; cursor:pointer; font-family:'Space Grotesk',sans-serif; font-weight:500;
+    transition: all 0.15s;
+  }
+  .remove-btn:hover{ background:var(--danger-soft); }
+
+  .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:0;
+    font-size:13px;
+    padding:11px 22px;
+    border-radius:12px;
+    border:1px solid var(--line-strong);
+    background:rgba(255,255,255,0.03);
+    color:var(--text);
+    cursor:pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover{ border-color:var(--violet); background:var(--violet-soft); }
+  .btn.primary{
+    background:var(--grad); color:#08090C; border-color:transparent;
+    box-shadow: 0 4px 20px rgba(124,92,255,0.25);
+  }
+  .btn.primary:hover{ filter:brightness(1.08); box-shadow: 0 4px 26px rgba(124,92,255,0.4); }
+  .btn.ghost{ border-color:var(--line); color:var(--text-dim); background:transparent; }
+  .btn.ghost:hover{ background:rgba(255,255,255,0.04); border-color:var(--line-strong); color:var(--text); }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .btn:disabled:hover{ background:transparent; border-color:var(--line-strong); }
+  .btn.confirmed{
+    background: var(--teal) !important;
+    border-color: var(--teal) !important;
+    color:#08090C !important;
+  }
+
+  .row-actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+
+  /* ===== OUTPUT CONSOLE (signature element) ===== */
+  .viewfinder-wrap{ position:sticky; top:20px; }
+  .viewfinder{
+    background: linear-gradient(165deg, rgba(124,92,255,0.08), rgba(0,224,184,0.04)), var(--glass);
+    backdrop-filter: blur(20px);
+    border-radius:20px;
+    padding:0;
+    overflow:hidden;
+    position:relative;
+    border:1px solid transparent;
+    background-clip:padding-box;
+  }
+  .viewfinder::before{
+    content:'';
+    position:absolute; inset:0; border-radius:20px; padding:1px;
+    background:linear-gradient(160deg, rgba(124,92,255,0.55), rgba(0,224,184,0.25), rgba(124,92,255,0.05));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events:none;
+    animation: borderGlow 6s ease-in-out infinite;
+  }
+  @keyframes borderGlow{
+    0%,100%{ opacity:0.6; }
+    50%{ opacity:1; }
+  }
+  .vf-titlebar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid var(--line);
+  }
+  .vf-titlebar .vf-name{
+    font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.02em;
+    color:var(--text); font-weight:600;
+  }
+  .vf-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:8px;
+    box-shadow: 0 0 8px var(--teal);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+  .vf-frame{
+    position:relative;
+    padding:22px 20px 18px;
+    min-height:240px;
+  }
+
+  .vf-output{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.7;
+    color:var(--text);
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    min-height:160px;
+  }
+  .vf-output .ghost-text{ color:var(--text-faint); font-family:'Space Grotesk',sans-serif; font-size:13px; }
+  .vf-output .gsl{ color:var(--teal); }
+  .vf-output .shotnum{ color:var(--violet); font-weight:700; }
+  .vf-output .negline{ color:var(--danger); }
+
+  .meter-bar{
+    display:flex; align-items:center; gap:10px;
+    padding:13px 18px; border-top:1px solid var(--line);
+    font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint);
+    font-family:'Space Grotesk',sans-serif; font-weight:500;
+  }
+  .meter-track{
+    flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;
+  }
+  .meter-fill{ height:100%; background:var(--grad); width:0%; transition:width 0.25s; border-radius:4px; }
+  .meter-fill.over{ background:var(--danger); }
+  .meter-num{ color:var(--text); font-weight:600; min-width:64px; text-align:right; font-family:'JetBrains Mono',monospace; }
+
+  .vf-actions{ display:flex; gap:10px; padding:16px 18px; border-top:1px solid var(--line); }
+  .vf-actions .btn{ flex:1; font-size:12.5px; padding:10px 14px; }
+
+  .copied-flash{
+    position:absolute; top:14px; right:46px; font-size:10px; letter-spacing:0.06em;
+    color:var(--teal); opacity:0; transition:opacity 0.2s; text-transform:uppercase; font-weight:600;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .copied-flash.show{ opacity:1; }
+
+  /* gradient progress strip (replaces film leader) */
+  .leader{
+    display:flex; gap:4px; margin-top:16px; flex-wrap:wrap;
+  }
+  .leader-seg{
+    width:18px; height:8px; border-radius:4px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    flex-shrink:0;
+    transition: all 0.2s;
+  }
+  .leader-seg.filled{ background:var(--grad); border-color:transparent; box-shadow:0 0 8px rgba(124,92,255,0.35); }
+
+  .hint{
+    font-family:'Space Grotesk', sans-serif; font-size:12.5px;
+    color:var(--text-faint); margin-top:10px; line-height:1.5;
+  }
+
+  /* select with custom reveal */
+  .field.has-custom select{ margin-bottom:6px; }
+  .custom-reveal{
+    display:none;
+    margin-top:6px;
+  }
+  .custom-reveal.show{ display:block; }
+  .field-note{
+    font-size:10.5px; color:var(--teal); font-family:'Space Grotesk',sans-serif; margin-top:4px;
+  }
+  .shot-section-title{
+    font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-faint);
+    margin:16px 0 8px; padding-top:12px; border-top:1px solid var(--line); font-weight:600;
+  }
+  .shot-section-title:first-of-type{ border-top:none; padding-top:0; margin-top:2px; }
+  .duration-presets{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .dpreset{
+    border:1px solid var(--line-strong); background:rgba(255,255,255,0.02); color:var(--text-dim);
+    font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:500; padding:4px 10px; border-radius:12px; cursor:pointer;
+    transition: all 0.15s;
+  }
+  .dpreset:hover{ border-color:var(--teal); color:var(--text); background:var(--teal-soft); }
+
+  .footer-note{
+    text-align:center; color:var(--text-faint); font-size:11px; letter-spacing:0.04em;
+    margin-top:34px; line-height:1.8; font-family:'Space Grotesk',sans-serif;
+  }
+  .footer-note b{
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .footer-copyright{
+    text-align:center; color:var(--text-faint); font-size:10.5px; letter-spacing:0.04em;
+    margin-top:8px; font-family:'JetBrains Mono', monospace; opacity:0.7;
+  }
+
+  ::-webkit-scrollbar{ width:9px; }
+  ::-webkit-scrollbar-track{ background:var(--void); }
+  ::-webkit-scrollbar-thumb{ background:var(--text-faint); border-radius:5px; }
+
+  /* ===== TABS ===== */
+  .tab-bar{
+    display:flex;
+    gap:6px;
+    margin-bottom:22px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:5px;
+    background:var(--glass);
+    backdrop-filter: blur(16px);
+    width:fit-content;
+  }
+  .tab-btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:10px 20px;
+    border-radius:10px;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    cursor:pointer;
+    transition: all 0.18s;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .tab-btn:hover{ color:var(--text); background:rgba(255,255,255,0.04); }
+  .tab-btn.active{
+    background:var(--grad);
+    color:#08090C;
+  }
+  .tab-btn .tab-icon{ font-size:14px; line-height:1; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  /* ===== UPLOAD ZONE ===== */
+  .upload-zone{
+    border:1.5px dashed var(--line-strong);
+    border-radius:16px;
+    padding:32px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.015);
+    position:relative;
+    overflow:hidden;
+  }
+  .upload-zone:hover{ border-color:var(--violet); background:var(--violet-soft); }
+  .upload-zone.drag-over{ border-color:var(--teal); background:var(--teal-soft); }
+  .upload-icon{
+    font-size:28px; color:var(--violet); margin-bottom:10px;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+    display:inline-block;
+  }
+  .upload-text{
+    font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:var(--text); font-weight:500; margin:0 0 4px;
+  }
+  .upload-sub{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-faint); margin:0;
+  }
+  #imagePreview, #lastFramePreview{
+    max-width:100%; max-height:220px; border-radius:10px; display:block; margin:0 auto;
+  }
+  .dual-upload{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:16px;
+  }
+  .dual-upload.two-col{
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width:560px){
+    .dual-upload.two-col{ grid-template-columns: 1fr; }
+  }
+  .upload-col-label{
+    font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.04em;
+    color:var(--text-dim); font-weight:600; margin:0 0 8px;
+  }
+
+  .analysis-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:520px){ .analysis-grid{ grid-template-columns:1fr; } }
+  .analysis-item{
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 13px;
+  }
+  .analysis-item .a-label{
+    font-family:'Space Grotesk',sans-serif; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--violet); font-weight:600; margin:0 0 4px;
+  }
+  .analysis-item .a-value{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); line-height:1.5; margin:0;
+  }
+
+  .spinner{
+    display:inline-block; width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(124,92,255,0.25); border-top-color:var(--violet);
+    animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="studio-header">
+    <div>
+      <p class="dev-credit">Developed by Dallfy Studio</p>
+      <h1 class="studio-title">Seedance <span>Studio</span></h1>
+      <p class="studio-sub">Build cinematic, prompt-adherent shots for Seedance 2.0 — one clip at a time, locked to a continuity style so the whole sequence cuts together clean.</p>
+    </div>
+    <div class="studio-meta">
+      PROD · FEATURE 01<br>
+      LIMIT <b>4–15s / GENERATION</b><br>
+      SUBJ → MOTION → ENV → AES → CAM → AUDIO
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="builder"><span class="tab-icon">▤</span> Shot Builder</button>
+    <button class="tab-btn" data-tab="analyzer"><span class="tab-icon">◐</span> Image Analyzer</button>
+  </div>
+
+  <div id="tab-builder" class="tab-panel active">
+  <div class="deck">
+    <!-- LEFT COLUMN: BUILDER -->
+    <div>
+
+      <!-- SHOT MODE -->
+      <div class="card">
+        <p class="card-label"><span class="num">00</span> SHOT MODE</p>
+        <p class="card-desc">Pick the format first — this sets sensible duration, camera bias, and structure defaults for every shot you add next. You can still override anything per-shot.</p>
+        <div class="chip-group" id="modeGroup">
+          <button class="chip mode-chip active" data-mode="single">Single Shot</button>
+          <button class="chip mode-chip" data-mode="multi">Multi-Shot</button>
+          <button class="chip mode-chip" data-mode="continuous">Continuous Shot</button>
+          <button class="chip mode-chip" data-mode="pov">POV</button>
+          <button class="chip mode-chip" data-mode="frozen">Frozen-in-Time</button>
+          <button class="chip mode-chip" data-mode="transform">Transformation</button>
+          <button class="chip mode-chip" data-mode="dialogue">Dialogue Scene</button>
+          <button class="chip mode-chip" data-mode="action">Action / Fight</button>
+        </div>
+        <p class="hint" id="modeHint">Single Shot — one self-contained beat, 3–8s. Best for product shots, establishing wides, or a single dramatic moment.</p>
+      </div>
+
+      <!-- GLOBAL STYLE LOCK -->
+      <div class="card">
+        <p class="card-label"><span class="num">01</span> CONTINUITY LOCK</p>
+        <p class="card-desc">One style line, reused verbatim across every shot in this sequence — this is what keeps footage from drifting when you stitch clips together later.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Aspect Ratio</label>
+            <div class="select-wrap">
+              <select id="aspect">
+                <option>16:9</option>
+                <option>2.35:1</option>
+                <option>21:9</option>
+                <option>9:16</option>
+                <option>1:1</option>
+                <option>4:3</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Film Stock / Render Feel</label>
+            <div class="select-wrap">
+              <select id="stock">
+                <option value="35mm film quality, ARRI ALEXA aesthetic, photorealistic, subtle film grain">35mm / ARRI realism</option>
+                <option value="cinematic stylized 3D animation, photorealistic environment, stylized characters">Stylized 3D animation</option>
+                <option value="hand-drawn comic style, bold ink linework, flat cel shading">Hand-drawn / comic</option>
+                <option value="anime cel-shading, vibrant neon accents, dynamic speed lines">Anime cel-shaded</option>
+                <option value="high-contrast black and white, noir film grain">Noir B&W</option>
+                <option value="custom">— custom (type below) —</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Color Grade</label>
+            <div class="select-wrap">
+              <select id="grade">
+                <option value="professional color grading, teal-and-orange Hollywood grade">Teal &amp; orange</option>
+                <option value="professional color grading, desaturated cool tones">Desaturated cool</option>
+                <option value="professional color grading, warm golden-hour tones">Warm golden-hour</option>
+                <option value="professional color grading, high-contrast chiaroscuro lighting">High-contrast noir</option>
+                <option value="professional color grading, soft pastel tones">Soft pastel</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Custom Style Line (overrides selects if filled)</label>
+          <textarea id="customStyle" placeholder="e.g. 16mm handheld documentary grain, desaturated, overcast natural light, no stabilization..."></textarea>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Realism / Anti-Style Flags</label>
+          <div class="chip-group" id="negFlags">
+            <button class="chip" data-val="no 3D, no cartoon, no VFX">no 3D / cartoon / VFX</button>
+            <button class="chip" data-val="no text overlays, no watermark">no text / watermark</button>
+            <button class="chip" data-val="sharp focus, depth of field mastery">sharp focus + DOF mastery</button>
+            <button class="chip" data-val="realistic physics, natural motion blur">realistic physics</button>
+          </div>
+        </div>
+        <p class="hint">Tip — for creatures or skin that looks plasticky, "no 3D, no cartoon, no VFX" forces Seedance toward photoreal texture.</p>
+      </div>
+
+      <!-- REFERENCE ASSETS -->
+      <div class="card">
+        <p class="card-label"><span class="num">02</span> REFERENCE TAGS</p>
+        <p class="card-desc">If you're uploading images or video to Seedance, name them here. Tags get woven into your shots automatically wherever you reference that subject.</p>
+        <div id="refList"></div>
+        <div class="row-actions">
+          <button class="btn ghost" id="addRef">+ Add Reference</button>
+        </div>
+      </div>
+
+      <!-- SHOT LIST -->
+      <div class="card">
+        <p class="card-label"><span class="num">03</span> SHOT LIST</p>
+        <p class="card-desc">Each shot needs roughly 2–3 seconds of breathing room. Keep total sequence duration to 15s or less for a single generation.</p>
+        <p class="field-note" id="modeStructureNote" style="margin-bottom:14px;"></p>
+
+        <div id="shotList"></div>
+
+        <div class="row-actions">
+          <button class="btn primary" id="addShot">+ Add Shot</button>
+          <button class="btn ghost" id="clearShots">Clear All</button>
+        </div>
+
+        <div class="leader" id="leaderStrip"></div>
+        <p class="hint" id="durationHint"></p>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: VIEWFINDER -->
+    <div class="viewfinder-wrap">
+      <div class="viewfinder">
+        <div class="vf-titlebar">
+          <span class="vf-name"><span class="vf-dot"></span>Live Prompt</span>
+          <span style="font-size:10px;color:var(--text-faint);letter-spacing:0.06em;font-family:'Space Grotesk',sans-serif;">READY TO PASTE</span>
+        </div>
+        <div class="vf-frame">
+          <span class="copied-flash" id="copiedFlash">Copied ✓</span>
+          <div class="vf-output" id="output"><span class="ghost-text">Your assembled Seedance 2.0 prompt will appear here as you build the slate on the left. Start by locking your continuity style, then add at least one shot.</span></div>
+        </div>
+        <div class="meter-bar">
+          <span>Words</span>
+          <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+          <span class="meter-num" id="meterNum">0 / 200</span>
+        </div>
+        <div class="vf-actions">
+          <button class="btn primary" id="copyBtn">Copy Prompt</button>
+          <button class="btn ghost" id="downloadBtn">Download .txt</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <p class="card-label"><span class="num">i</span> Layer Extra Texture</p>
+        <p class="card-desc">Dropdowns set your primary pick — tap a chip here to stack an extra descriptor onto the last shot you clicked into, the way a DP adds a modifier on top of a base move.</p>
+        <div class="subgroup-title">Camera Movement Add-ons</div>
+        <div class="chip-group" id="vocabCamera"></div>
+        <div class="subgroup-title">Framing Add-ons</div>
+        <div class="chip-group" id="vocabFraming"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <!-- /tab-builder -->
+
+  <div id="tab-analyzer" class="tab-panel">
+    <div class="deck">
+      <!-- LEFT COLUMN: UPLOAD + INTENT -->
+      <div>
+
+        <div class="card">
+          <p class="card-label"><span class="num">01</span> UPLOAD REFERENCE IMAGE(S)</p>
+          <p class="card-desc">Upload a first frame — the analyzer reads its mood, lighting, color, and composition. Add an optional last frame if you're planning a transformation, and the analyzer will compare both to chart what changes between them.</p>
+
+          <div class="dual-upload">
+            <div class="upload-col">
+              <p class="upload-col-label">First Frame <span style="color:var(--danger);">*</span></p>
+              <div class="upload-zone" id="uploadZone">
+                <input type="file" id="imageInput" accept="image/*" style="display:none;">
+                <div id="uploadPrompt">
+                  <div class="upload-icon">⤒</div>
+                  <p class="upload-text">Click or drag image here</p>
+                  <p class="upload-sub">JPG, PNG, WEBP</p>
+                </div>
+                <img id="imagePreview" style="display:none;">
+              </div>
+              <div class="row-actions" id="imageActions" style="display:none;">
+                <button class="btn ghost" id="changeImageBtn">Change</button>
+              </div>
+            </div>
+
+            <div class="upload-col" id="lastFrameCol" style="display:none;">
+              <p class="upload-col-label">Last Frame <span style="color:var(--text-faint); font-weight:400;">(optional)</span></p>
+              <div class="upload-zone" id="lastFrameUploadZone">
+                <input type="file" id="lastFrameInput" accept="image/*" style="display:none;">
+                <div id="lastFramePrompt">
+                  <div class="upload-icon">⤒</div>
+                  <p class="upload-text">Click or drag final frame here</p>
+                  <p class="upload-sub">What the transformation ends on</p>
+                </div>
+                <img id="lastFramePreview" style="display:none;">
+              </div>
+              <div class="row-actions" id="lastFrameActions" style="display:none;">
+                <button class="btn ghost" id="changeLastFrameBtn">Change</button>
+                <button class="btn ghost" id="removeLastFrameBtn">Remove</button>
+              </div>
+            </div>
+          </div>
+          <p class="field-note" id="lastFrameHint" style="display:none;">Select Transformation mode below to add a last frame — the analyzer will chart the change between your two images.</p>
+        </div>
+
+        <div class="card">
+          <p class="card-label"><span class="num">02</span> YOUR INTENT</p>
+          <p class="card-desc">A brief line is enough — what should this image become? The analyzer combines this with what it sees in the frame.</p>
+          <div class="field">
+            <label>What do you want to do with this image?</label>
+            <textarea id="intentInput" placeholder="e.g. turn this into a tense chase scene at night, or bring this portrait to life with a slow emotional reveal..." style="min-height:80px;"></textarea>
+          </div>
+          <div class="field-row" style="margin-top:4px;">
+            <div class="field has-custom">
+              <label>Target Shot Mode</label>
+              <div class="select-wrap">
+                <select id="analyzerMode">
+                  <option value="multi">Multi-Shot (recommended)</option>
+                  <option value="single">Single Shot</option>
+                  <option value="continuous">Continuous Shot</option>
+                  <option value="pov">POV</option>
+                  <option value="transform">Transformation</option>
+                  <option value="action">Action / Fight</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Aspect Ratio</label>
+              <div class="select-wrap">
+                <select id="analyzerAspect">
+                  <option>16:9</option>
+                  <option>2.35:1</option>
+                  <option>21:9</option>
+                  <option>9:16</option>
+                  <option>1:1</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="field-row" id="analyzerTransformRow" style="display:none; margin-top:4px;">
+            <div class="field" style="flex:1;">
+              <label>Transformation Type <span style="color:var(--violet); font-weight:400;">(guides the prompt's style)</span></label>
+              <div class="select-wrap">
+                <select id="analyzerTransformType"></select>
+              </div>
+              <p class="field-note" id="analyzerTransformNote" style="display:none;"></p>
+            </div>
+          </div>
+          <div class="field-row" id="analyzerFightRow" style="display:none; margin-top:4px;">
+            <div class="field" style="flex:1;">
+              <label>Fight / Action Sequence Type <span style="color:var(--violet); font-weight:400;">(guides the choreography style)</span></label>
+              <div class="select-wrap">
+                <select id="analyzerFightType"></select>
+              </div>
+              <p class="field-note" id="analyzerFightNote" style="display:none;"></p>
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn primary" id="analyzeBtn" disabled>Analyze &amp; Generate Prompt</button>
+          </div>
+          <p class="hint" id="analyzerStatus"></p>
+        </div>
+
+        <div class="card" id="analysisCard" style="display:none;">
+          <p class="card-label"><span class="num">03</span> IMAGE ANALYSIS</p>
+          <p class="card-desc">What the analyzer read from the frame before writing the prompt.</p>
+          <div id="analysisOutput" class="analysis-grid"></div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: GENERATED PROMPT -->
+      <div class="viewfinder-wrap">
+        <div class="viewfinder">
+          <div class="vf-titlebar">
+            <span class="vf-name"><span class="vf-dot"></span>Generated Multi-Shot Prompt</span>
+            <span style="font-size:10px;color:var(--text-faint);letter-spacing:0.06em;font-family:'Space Grotesk',sans-serif;">READY TO PASTE</span>
+          </div>
+          <div class="vf-frame">
+            <span class="copied-flash" id="copiedFlash2">Copied ✓</span>
+            <div class="vf-output" id="analyzerOutput"><span class="ghost-text">Upload an image and describe your intent on the left. The generated multi-shot Seedance 2.0 prompt will stream in here once analysis completes.</span></div>
+          </div>
+          <div class="vf-actions">
+            <button class="btn primary" id="copyAnalyzerBtn">Copy Prompt</button>
+            <button class="btn ghost" id="downloadAnalyzerBtn">Download .txt</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <p class="card-label"><span class="num">i</span> HOW THIS WORKS</p>
+          <p class="card-desc">The analyzer sends your image and intent to Claude, which reads composition, lighting, color grade, mood, and subject — then writes a complete numbered shot list using the same Subject → Motion → Environment → Aesthetics → Camera → Audio structure as the Shot Builder tab, extending what's already in the frame rather than replacing it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /tab-analyzer -->
+
+  <p class="footer-note">Seedance Studio — internal tool · prompts target <b>Seedance 2.0</b> · single generation capped at 4–15s, chain scenes with Extend or Track Completion</p>
+  <p class="footer-copyright">Copyright 2026 www.dallfy.com</p>
+</div>
+
+<script>
+(function(){
+  const state = {
+    refs: [],
+    shots: [],
+    shotCounter: 0,
+    refCounter: 0,
+    mode: 'single',
+  };
+
+  // ===== SHOT MODE DEFINITIONS =====
+  const MODES = {
+    single: {
+      label: 'Single Shot',
+      hint: 'Single Shot — one self-contained beat, 3–8s. Best for product shots, establishing wides, or a single dramatic moment.',
+      structureNote: 'One shot only. Adding a 2nd shot here switches you into Multi-Shot automatically.',
+      defaultDur: 5,
+      maxShots: 1,
+      structureLabel: (n, dur, aspect) => `Single shot, ${dur}s, ${aspect}.`,
+      camera: '', // no forced bias
+    },
+    multi: {
+      label: 'Multi-Shot',
+      hint: 'Multi-Shot — 2–6 numbered shots cut together in one generation. Keep total ≤15s; budget ~2–3s per shot for breathing room.',
+      structureNote: 'Each shot is numbered and timed individually. Total duration is the sum of all shots below.',
+      defaultDur: 3,
+      maxShots: 6,
+      structureLabel: (n, dur, aspect) => `${n} shots, ${dur}s total, ${aspect}. Montage, multi-shot sequence, don't use one camera angle or single cut.`,
+      camera: '',
+    },
+    continuous: {
+      label: 'Continuous Shot',
+      hint: 'Continuous Shot — the camera itself travels through the whole sequence with no cuts. Describe the path as one unbroken move.',
+      structureNote: 'Stays as one shot. Use the Camera Movement field to describe the full travel path (e.g. "begins low, rises, then orbits").',
+      defaultDur: 12,
+      maxShots: 1,
+      structureLabel: (n, dur, aspect) => `Single continuous shot, ${dur}s, ${aspect}. No cuts — camera travels through the entire sequence in one unbroken move.`,
+      camera: 'single continuous shot, no cuts',
+    },
+    pov: {
+      label: 'POV',
+      hint: 'POV — first-person perspective, no visible camera or operator. Works best handheld with natural motion blur.',
+      structureNote: 'Camera Movement defaults to first-person POV on new shots. Keep subject description to what the viewer would see, not a third party.',
+      defaultDur: 8,
+      maxShots: 3,
+      structureLabel: (n, dur, aspect) => `${n === 1 ? 'Single shot' : n + ' shots'}, ${dur}s${n===1?'':' total'}, ${aspect}. First-person POV throughout, no visible camera.`,
+      camera: 'first-person POV, no visible camera',
+    },
+    frozen: {
+      label: 'Frozen-in-Time',
+      hint: 'Frozen-in-Time — motion stops mid-action (a freeze-frame), often followed by a transformation or reveal out of the freeze.',
+      structureNote: 'Describe the freeze explicitly in Subject + Motion, e.g. "...then the frame freezes, all motion suspended, before [X] happens."',
+      defaultDur: 10,
+      maxShots: 2,
+      structureLabel: (n, dur, aspect) => `${n === 1 ? 'Single shot' : n + ' shots'}, ${dur}s${n===1?'':' total'}, ${aspect}. Action freezes mid-motion, then resumes or transforms out of the freeze.`,
+      camera: '',
+    },
+    transform: {
+      label: 'Transformation',
+      hint: 'Transformation — an escalation arc: calm → threat/change → transformation → aftermath. Write each shot as one beat in that arc.',
+      structureNote: 'Aim for 4–6 numbered shots that escalate. Each shot\'s Subject + Motion should move the arc forward one beat.',
+      defaultDur: 3,
+      maxShots: 6,
+      structureLabel: (n, dur, aspect) => `${n} shots, ${dur}s total, ${aspect}. Escalation arc: calm to change to climax to resolution.`,
+      camera: '',
+    },
+    dialogue: {
+      label: 'Dialogue Scene',
+      hint: 'Dialogue Scene — characters speak on camera. Add lines in Subject + Motion (e.g. \'She says: "..."\') and Seedance will sync subtitles/lip movement.',
+      structureNote: 'Keep camera mostly static or a slow push-in per speaker — fast moves fight against clean dialogue delivery.',
+      defaultDur: 6,
+      maxShots: 4,
+      structureLabel: (n, dur, aspect) => `${n === 1 ? 'Single shot' : n + ' shots'}, ${dur}s${n===1?'':' total'}, ${aspect}. Dialogue scene, subtitles appear matching each line.`,
+      camera: 'static locked-off shot, no camera movement',
+    },
+    action: {
+      label: 'Action / Fight',
+      hint: 'Action / Fight — needs a clear location, power mismatch, and escalation. Write each shot as one beat of the choreography.',
+      structureNote: 'Aim for 4–6 shots: setup, clash, turning point, resolution. Vary camera angle every shot — never repeat the same framing twice in a row.',
+      defaultDur: 3,
+      maxShots: 6,
+      structureLabel: (n, dur, aspect) => `${n} shots, ${dur}s total, ${aspect}. Montage, multi-shot action sequence, don't use one camera angle or single cut, dynamic choreography.`,
+      camera: '',
+    },
+  };
+
+  // ===== FIGHT / ACTION CHOREOGRAPHY PRESETS =====
+  // Generic technique-level styles drawn from recurring patterns across action cinema —
+  // not tied to any single film, so they stay legally safe while still being genre-accurate.
+  const FIGHT_PRESETS = {
+    '': { label: '— choose a style —' },
+    bullet_time: {
+      label: 'Bullet-Time / Slow-Mo Dodge',
+      subject: 'A fighter leans back in extreme slow motion, narrowly avoiding a strike as the attacker\'s fist grazes past camera',
+      camera: 'slow motion ramp, orbit / arc shot circling the subject',
+      mood: 'slow motion ramp',
+      audio: 'low ambient drone',
+      note: 'Inspired by the classic wire-fu "dodge in slow motion while camera circles" beat popularized in late-90s action cinema.'
+    },
+    gun_fu: {
+      label: 'Gun-Fu / Tactical Takedown',
+      subject: 'A operative moves through a hallway, disarming an opponent and turning their own weapon against them in one fluid motion',
+      camera: 'tracking shot, camera follows alongside',
+      mood: 'explosive and chaotic',
+      audio: 'sharp metallic clang',
+      note: 'Modern "every bullet counts" tactical-combat style — precise hand-to-hand mixed with weapon disarms.'
+    },
+    wire_fu: {
+      label: 'Wire-Fu / Wuxia Flight',
+      subject: 'Two warriors leap impossibly high above a bamboo forest, trading strikes mid-air before landing weightlessly on a branch',
+      camera: 'crane shot rising vertically, orbit / arc shot circling the subject',
+      mood: 'calm and unhurried',
+      audio: 'wind whipping past the camera',
+      note: 'Wuxia-style gravity-defying combat — graceful, balletic, weightless movement through air.'
+    },
+    oner_hallway: {
+      label: 'Single-Take Hallway Brawl',
+      subject: 'A lone fighter battles through a narrow hallway full of attackers, never stopping as one opponent falls and the next steps in',
+      camera: 'single continuous shot, no cuts',
+      mood: 'frantic, rapid energy',
+      audio: 'footsteps echoing on hard floor',
+      note: 'The "oner" — an entire multi-opponent fight in one unbroken take, as popularized by hallway fight sequences in Korean and Indonesian action cinema.'
+    },
+    street_brawl: {
+      label: 'Street Fighter — Raw & Messy',
+      subject: 'Two men grapple clumsily on the ground, throwing wild, exhausted punches, both gasping for breath between exchanges',
+      camera: 'handheld follow, natural motion blur',
+      mood: 'tense, building dread',
+      audio: 'no music, ambient sound only',
+      note: 'The "street fighter" register — deliberately inelegant, breathless, and grounded rather than stylized.'
+    },
+    master_duel: {
+      label: 'Master Duel — Crisp & Elegant',
+      subject: 'Two master swordsmen circle each other, blades flashing in short, precise exchanges, neither wasting a single motion',
+      camera: 'static locked-off shot, no camera movement',
+      mood: 'calm and unhurried',
+      audio: 'tense, low ambient drone',
+      note: 'The "master" register — flawless, economical technique, stillness between bursts of motion.'
+    },
+    aerial_battlefield: {
+      label: 'Aerial Battlefield Establishing',
+      subject: 'Two armies clash across an open battlefield, the camera revealing the full scale of the formation from high above',
+      camera: 'aerial drone descent, bird\'s-eye top-down view',
+      mood: 'explosive and chaotic',
+      audio: 'distant thunder rumbling',
+      note: 'Large-scale battle establishing shot — drone/crane elevation to sell scale before cutting into close combat.'
+    },
+    weapon_clash: {
+      label: 'Weapon Clash & Spark',
+      subject: 'Two blades meet in a shower of sparks, the camera holding tight on the point of impact as both fighters strain against the lock',
+      camera: 'push-in',
+      mood: 'tense, building dread',
+      audio: 'sharp metallic clang',
+      note: 'The "weapons lock" beat — a held moment of contact and strain before the next exchange.'
+    },
+    rooftop_chase_fight: {
+      label: 'Rooftop Chase Into Fight',
+      subject: 'A figure sprints across a rooftop, leaping a gap between buildings, before tackling their pursuer at the edge',
+      camera: 'tracking shot, camera follows alongside',
+      mood: 'frantic, rapid energy',
+      audio: 'wind whipping past the camera',
+      note: 'Chase-to-combat hybrid — momentum carries directly into the fight rather than a clean cut.'
+    },
+    final_blow_slowmo: {
+      label: 'Final Blow — Slow-Motion Impact',
+      subject: 'The decisive strike lands in extreme slow motion, the defeated opponent\'s body lifting off the ground before crashing down',
+      camera: 'slow motion ramp, close-up',
+      mood: 'slow motion ramp',
+      audio: 'low ambient drone',
+      note: 'The climactic "final hit" beat — slows time to sell the weight and finality of the blow.'
+    },
+    underdog_comeback: {
+      label: 'Underdog Comeback Beat',
+      subject: 'Beaten and bloodied, the underdog rises slowly to their feet, wiping blood from their mouth as their expression hardens with resolve',
+      camera: 'slow dolly-in',
+      mood: 'melancholic and still',
+      audio: 'low ambient drone',
+      note: 'The "getting back up" turning-point beat that flips momentum before the final exchange.'
+    },
+  };
+
+  // ===== TRANSFORMATION SEQUENCE PRESETS =====
+  // Generic technique-level transformation styles drawn from recurring patterns across
+  // creature-feature, body-horror, and superhero cinema.
+  const TRANSFORM_PRESETS = {
+    '': { label: '— choose a style —' },
+    body_horror_tear: {
+      label: 'Body-Horror Skin Tear',
+      subject: 'The figure convulses as flesh tears and stretches, something dense and inhuman pushing out from beneath the skin',
+      camera: 'close-up',
+      mood: 'tense, building dread',
+      audio: 'tense, low ambient drone',
+      note: 'Classic practical-effects creature-feature register — visceral, anatomical, deliberately uncomfortable.'
+    },
+    bone_crack_silhouette: {
+      label: 'Bone-Crack Silhouette',
+      subject: 'A silhouette against the window doubles over, spine arching unnaturally as the shape of the body distorts and grows',
+      camera: 'static locked-off shot, no camera movement',
+      mood: 'tense, building dread',
+      audio: 'sharp metallic clang',
+      note: 'The "withheld reveal" approach — shadow and silhouette imply the transformation before the creature is shown directly.'
+    },
+    liquid_morph: {
+      label: 'Liquid-Metal Morph',
+      subject: 'The figure\'s surface ripples like liquid metal, reshaping fluidly from one form into another without a single cut',
+      camera: 'slow dolly-in',
+      mood: 'calm and unhurried',
+      audio: 'low ambient drone',
+      note: 'Seamless liquid-morph technique — continuous reshaping rather than a violent rupture.'
+    },
+    flash_transform: {
+      label: 'Flash Transformation (No Cut)',
+      subject: 'A burst of light engulfs the figure mid-stride, and in that single flash, an ordinary person becomes something far more powerful',
+      camera: 'whip pan',
+      mood: 'explosive and chaotic',
+      audio: 'sharp metallic clang',
+      note: 'The instant superhero-style transformation — happens in one beat, often disguised by a whip pan or light flare so no seam is visible.'
+    },
+    transformation_in_motion: {
+      label: 'Transformation-in-Motion (Running)',
+      subject: 'Running at full speed, the figure\'s gait shifts unnaturally — limbs lengthening, posture changing — without ever slowing down',
+      camera: 'tracking shot, camera follows alongside',
+      mood: 'frantic, rapid energy',
+      audio: 'wind whipping past the camera',
+      note: 'The change happens entirely while the character is in motion, sustaining momentum through the transformation.'
+    },
+    gradual_stage_reveal: {
+      label: 'Gradual Multi-Stage Reveal',
+      subject: 'The creature passes behind a row of pillars, and with each one it passes, more of the transformation becomes visible',
+      camera: 'tracking shot, camera follows alongside',
+      mood: 'tense, building dread',
+      audio: 'footsteps echoing on hard floor',
+      note: 'Classic in-camera staging trick — the subject is progressively revealed across a single continuous move rather than a hard cut.'
+    },
+    rage_power_surge: {
+      label: 'Rage / Power Surge Bulk-Up',
+      subject: 'Muscles swell and surge as the figure\'s body grows larger, clothing tearing at the seams, eyes burning with sudden fury',
+      camera: 'push-in',
+      mood: 'explosive and chaotic',
+      audio: 'low ambient drone',
+      note: 'The anger-triggered bulking transformation — rapid size and power increase tied to an emotional spike.'
+    },
+    suit_up_sequence: {
+      label: 'Suit-Up / Armor Assembly',
+      subject: 'Plates of armor fly in from every angle, locking into place piece by piece around the figure in a precise mechanical sequence',
+      camera: 'orbit / arc shot circling the subject',
+      mood: 'calm and unhurried',
+      audio: 'sharp metallic clang',
+      note: 'The technological "suiting up" sequence — armor or gear assembles itself onto the character in rapid, satisfying beats.'
+    },
+    frozen_then_transform: {
+      label: 'Freeze, Then Transform',
+      subject: 'All motion suspends mid-action, then the frozen figure begins to glow at the edges and reshapes into something new before motion resumes',
+      camera: 'orbit / arc shot circling the subject',
+      mood: 'calm and unhurried',
+      audio: 'low ambient drone',
+      note: 'Pairs naturally with Frozen-in-Time mode — the freeze itself becomes the transformation trigger.'
+    },
+    aftermath_reveal: {
+      label: 'Aftermath Reveal (Post-Transform)',
+      subject: 'Smoke clears to reveal the fully transformed figure standing still, breathing heavily, the new form now permanent',
+      camera: 'slow dolly-in',
+      mood: 'melancholic and still',
+      audio: 'no music, ambient sound only',
+      note: 'The quiet "after the change" beat — lets the new form land emotionally before the next scene.'
+    },
+  };
+
+  const cameraVocab = ["slow dolly-in","push-in","pull-back","tracking shot","orbit / arc shot","crane shot","whip pan","handheld follow","Steadicam glide","aerial drone descent","first-person POV","extreme low angle","bird's-eye"];
+  const framingVocab = ["extreme wide shot","wide establishing shot","medium shot","medium close-up","close-up","extreme close-up","over-the-shoulder","two-shot","insert shot"];
+
+  function renderVocab(containerId, list){
+    const c = document.getElementById(containerId);
+    c.innerHTML = list.map(v => `<button class="chip" data-insert="${v}">${v}</button>`).join('');
+  }
+  renderVocab('vocabCamera', cameraVocab);
+  renderVocab('vocabFraming', framingVocab);
+
+  let lastFocusedCard = null;
+
+  document.body.addEventListener('focusin', (e) => {
+    const card = e.target.closest('.shot-card');
+    if(card) lastFocusedCard = card;
+  });
+
+  document.getElementById('vocabCamera').addEventListener('click', handleVocabClick);
+  document.getElementById('vocabFraming').addEventListener('click', handleVocabClick);
+  function handleVocabClick(e){
+    const btn = e.target.closest('[data-insert]');
+    if(!btn) return;
+    const val = btn.getAttribute('data-insert');
+    const targetCard = lastFocusedCard || document.querySelector('.shot-card');
+    if(!targetCard) return;
+    const isCamera = e.currentTarget.id === 'vocabCamera';
+    const select = targetCard.querySelector(isCamera ? '.shot-camera-select' : '.shot-framing-select');
+    const customInput = targetCard.querySelector(isCamera ? '.shot-camera-custom' : '.shot-framing-custom');
+    if(select && customInput){
+      select.value = 'custom';
+      customInput.classList.add('show');
+      customInput.value = customInput.value ? (customInput.value.trim().replace(/\.$/,'') + ', ' + val) : val;
+      customInput.focus();
+    }
+    renderOutput();
+  }
+
+  // ===== Mode selection =====
+  function applyMode(modeKey){
+    state.mode = modeKey;
+    document.querySelectorAll('.mode-chip').forEach(c => {
+      c.classList.toggle('active', c.getAttribute('data-mode') === modeKey);
+    });
+    document.getElementById('modeHint').textContent = MODES[modeKey].hint;
+    document.getElementById('modeStructureNote').textContent = MODES[modeKey].structureNote;
+    renderOutput();
+  }
+  document.getElementById('modeGroup').addEventListener('click', (e)=>{
+    const chip = e.target.closest('.mode-chip');
+    if(!chip) return;
+    applyMode(chip.getAttribute('data-mode'));
+  });
+
+
+  document.getElementById('negFlags').addEventListener('click', (e)=>{
+    const chip = e.target.closest('.chip');
+    if(!chip) return;
+    chip.classList.toggle('active');
+    renderOutput();
+  });
+
+  ['aspect','stock','grade','customStyle'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', renderOutput);
+    document.getElementById(id).addEventListener('change', renderOutput);
+  });
+
+  // ===== Reference tags =====
+  function addRef(){
+    state.refCounter++;
+    const id = 'ref-' + state.refCounter;
+    state.refs.push(id);
+    const wrap = document.createElement('div');
+    wrap.className = 'field-row';
+    wrap.id = id;
+    wrap.style.alignItems = 'end';
+    wrap.innerHTML = `
+      <div class="field">
+        <label>Tag</label>
+        <input type="text" value="Image ${state.refs.length}" class="ref-tag" placeholder="Image 1 / Video 1">
+      </div>
+      <div class="field has-custom" style="flex:2;">
+        <label>What it locks</label>
+        <div class="select-wrap">
+          <select class="ref-desc-select">
+            <option value="">— choose —</option>
+            <option value="the character's face and identity">Character face / identity</option>
+            <option value="the character's outfit and accessories">Character outfit / accessories</option>
+            <option value="the product's shape, material, and label">Product shape / label</option>
+            <option value="the logo typography, shape, color, and spacing">Logo typography / color</option>
+            <option value="the camera movement and trajectory">Camera movement / trajectory</option>
+            <option value="the lighting setup and color grade">Lighting setup / grade</option>
+            <option value="the action choreography and timing">Action choreography / timing</option>
+            <option value="the background environment and composition">Background environment</option>
+            <option value="custom">— custom (type below) —</option>
+          </select>
+          <input type="text" class="ref-desc-custom custom-reveal" placeholder="Describe what this reference locks...">
+        </div>
+      </div>
+      <div class="field" style="max-width:90px;">
+        <label>&nbsp;</label>
+        <button class="remove-btn ref-remove">Remove</button>
+      </div>
+    `;
+    document.getElementById('refList').appendChild(wrap);
+    wrap.querySelectorAll('input').forEach(inp => inp.addEventListener('input', renderOutput));
+    const refSelect = wrap.querySelector('.ref-desc-select');
+    const refCustom = wrap.querySelector('.ref-desc-custom');
+    refSelect.addEventListener('change', ()=>{
+      refCustom.classList.toggle('show', refSelect.value === 'custom');
+      renderOutput();
+    });
+    wrap.querySelector('.ref-remove').addEventListener('click', ()=>{
+      wrap.remove();
+      state.refs = state.refs.filter(r => r !== id);
+      renderOutput();
+    });
+    renderOutput();
+  }
+  document.getElementById('addRef').addEventListener('click', addRef);
+
+  // ===== Shots =====
+  function addShot(){
+    state.shotCounter++;
+    const id = 'shot-' + state.shotCounter;
+    state.shots.push(id);
+    const card = document.createElement('div');
+    card.className = 'shot-card';
+    card.id = id;
+    const shotIndex = state.shots.length;
+    const modeDef = MODES[state.mode];
+    const defaultDur = modeDef ? modeDef.defaultDur : 3;
+    card.innerHTML = `
+      <div class="shot-card-head">
+        <h4><span class="n">SHOT ${shotIndex}</span></h4>
+        <button class="remove-btn shot-remove">Strike</button>
+      </div>
+
+      <div class="shot-section-title">Duration</div>
+      <div class="field-row" style="margin-bottom:6px;">
+        <div class="field" style="max-width:120px;">
+          <input type="number" class="shot-dur" value="${defaultDur}" min="1" max="15" step="1">
+        </div>
+        <div class="field" style="flex:3; justify-content:center;">
+          <div class="duration-presets">
+            <button type="button" class="dpreset" data-dur="2">2s — beat</button>
+            <button type="button" class="dpreset" data-dur="3">3s — standard</button>
+            <button type="button" class="dpreset" data-dur="5">5s — held</button>
+            <button type="button" class="dpreset" data-dur="8">8s — lingering</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shot-section-title">Subject &amp; Action</div>
+      <div class="field-row">
+        <div class="field" style="flex:1;">
+          <label>Choreography / Transformation Preset <span style="color:var(--violet); font-weight:400;">(optional — auto-fills fields below)</span></label>
+          <div class="select-wrap">
+            <select class="shot-preset-select">
+              <option value="">— none, write my own —</option>
+              <optgroup label="Fight / Action Choreography">
+                ${Object.entries(FIGHT_PRESETS).filter(([k])=>k).map(([k,v]) => `<option value="fight:${k}">${v.label}</option>`).join('')}
+              </optgroup>
+              <optgroup label="Transformation Styles">
+                ${Object.entries(TRANSFORM_PRESETS).filter(([k])=>k).map(([k,v]) => `<option value="transform:${k}">${v.label}</option>`).join('')}
+              </optgroup>
+            </select>
+          </div>
+          <p class="field-note shot-preset-note" style="display:none;"></p>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="flex:1;">
+          <label>Subject + Motion</label>
+          <input type="text" class="shot-subject" placeholder="e.g. A masked rider leaps from the rooftop">
+        </div>
+      </div>
+
+      <div class="shot-section-title">Framing &amp; Camera</div>
+      <div class="field-row">
+        <div class="field has-custom">
+          <label>Framing / Shot Scale</label>
+          <div class="select-wrap">
+            <select class="shot-framing-select">
+              <option value="">— choose —</option>
+              <option value="extreme wide shot">Extreme wide shot</option>
+              <option value="wide establishing shot">Wide establishing shot</option>
+              <option value="medium shot">Medium shot</option>
+              <option value="medium close-up">Medium close-up</option>
+              <option value="close-up">Close-up</option>
+              <option value="extreme close-up">Extreme close-up</option>
+              <option value="over-the-shoulder shot">Over-the-shoulder shot</option>
+              <option value="two-shot">Two-shot</option>
+              <option value="insert shot">Insert shot</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-framing-custom custom-reveal" placeholder="Describe framing...">
+          </div>
+        </div>
+        <div class="field has-custom">
+          <label>Camera Movement</label>
+          <div class="select-wrap">
+            <select class="shot-camera-select">
+              <option value="">— choose —</option>
+              <option value="slow dolly-in">Slow dolly-in</option>
+              <option value="dolly pull-back">Dolly pull-back</option>
+              <option value="push-in">Push-in</option>
+              <option value="tracking shot, camera follows alongside">Tracking shot (follows alongside)</option>
+              <option value="orbit / arc shot circling the subject">Orbit / arc shot</option>
+              <option value="crane shot rising vertically">Crane shot (rises)</option>
+              <option value="crane shot descending">Crane shot (descends)</option>
+              <option value="whip pan">Whip pan</option>
+              <option value="slow tilt up">Tilt up</option>
+              <option value="slow tilt down">Tilt down</option>
+              <option value="handheld follow, natural motion blur">Handheld follow</option>
+              <option value="smooth Steadicam glide">Steadicam glide</option>
+              <option value="aerial drone descent">Aerial drone descent</option>
+              <option value="first-person POV, no visible camera">First-person POV</option>
+              <option value="extreme low angle looking up">Extreme low angle (up)</option>
+              <option value="bird's-eye top-down view">Bird's-eye / top-down</option>
+              <option value="static locked-off shot, no camera movement">Static / locked-off</option>
+              <option value="single continuous shot, no cuts">Single continuous shot</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-camera-custom custom-reveal" placeholder="Describe camera move...">
+          </div>
+        </div>
+      </div>
+
+      <div class="shot-section-title">Environment &amp; Light</div>
+      <div class="field-row">
+        <div class="field has-custom" style="flex:1;">
+          <label>Environment</label>
+          <div class="select-wrap">
+            <select class="shot-env-select">
+              <option value="">— choose —</option>
+              <option value="a rain-soaked city rooftop">Rain-soaked rooftop</option>
+              <option value="a dense, fog-laden forest">Foggy forest</option>
+              <option value="a neon-lit futuristic urban street">Neon futuristic street</option>
+              <option value="a sunlit coastal cliffside">Sunlit coastal cliffside</option>
+              <option value="a dim, smoke-filled warehouse interior">Smoke-filled warehouse</option>
+              <option value="a quiet suburban kitchen at night">Suburban kitchen, night</option>
+              <option value="a vast desert under a wide open sky">Open desert</option>
+              <option value="a crowded train rooftop, speeding">Speeding train rooftop</option>
+              <option value="an alien moon surface with twin planets visible">Alien moon surface</option>
+              <option value="a candlelit cathedral interior">Candlelit cathedral</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-env-custom custom-reveal" placeholder="Describe the location...">
+          </div>
+        </div>
+        <div class="field has-custom">
+          <label>Time of Day</label>
+          <div class="select-wrap">
+            <select class="shot-time-select">
+              <option value="">— choose —</option>
+              <option value="golden hour">Golden hour</option>
+              <option value="blue hour dusk">Blue hour / dusk</option>
+              <option value="high noon, harsh overhead sun">High noon</option>
+              <option value="overcast grey daylight">Overcast daylight</option>
+              <option value="dead of night">Dead of night</option>
+              <option value="first light at dawn">Dawn</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-time-custom custom-reveal" placeholder="Describe time of day...">
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field has-custom" style="flex:1;">
+          <label>Lighting Style</label>
+          <div class="select-wrap">
+            <select class="shot-light-select">
+              <option value="">— choose —</option>
+              <option value="cinematic volumetric lighting">Volumetric lighting</option>
+              <option value="hard-key chiaroscuro lighting">Chiaroscuro (hard-key)</option>
+              <option value="soft diffused natural light">Soft diffused natural light</option>
+              <option value="cool blue practical lighting">Cool blue practical</option>
+              <option value="warm tungsten interior lighting">Warm tungsten interior</option>
+              <option value="harsh fluorescent overhead lighting">Harsh fluorescent</option>
+              <option value="flickering candlelight">Flickering candlelight</option>
+              <option value="dramatic rim lighting">Dramatic rim lighting</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-lightstyle-custom custom-reveal" placeholder="Describe lighting...">
+          </div>
+        </div>
+        <div class="field has-custom">
+          <label>Pace / Mood</label>
+          <div class="select-wrap">
+            <select class="shot-mood-select">
+              <option value="">— choose —</option>
+              <option value="calm and unhurried">Calm, unhurried</option>
+              <option value="tense, building dread">Tense, building dread</option>
+              <option value="explosive and chaotic">Explosive, chaotic</option>
+              <option value="slow motion ramp">Slow motion ramp</option>
+              <option value="frantic, rapid energy">Frantic, rapid energy</option>
+              <option value="melancholic and still">Melancholic, still</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-mood-custom custom-reveal" placeholder="Describe pace or mood...">
+          </div>
+        </div>
+      </div>
+
+      <div class="shot-section-title">Audio</div>
+      <div class="field-row">
+        <div class="field has-custom" style="flex:1;">
+          <label>Audio / SFX</label>
+          <div class="select-wrap">
+            <select class="shot-audio-select">
+              <option value="">— choose —</option>
+              <option value="distant thunder rumbling">Distant thunder</option>
+              <option value="rain pattering steadily">Steady rain</option>
+              <option value="tense, low ambient drone">Low ambient drone</option>
+              <option value="footsteps echoing on hard floor">Echoing footsteps</option>
+              <option value="muffled city traffic hum">City traffic hum</option>
+              <option value="sharp metallic clang">Metallic clang</option>
+              <option value="wind whipping past the camera">Wind whipping past</option>
+              <option value="no music, ambient sound only">No music — ambient only</option>
+              <option value="custom">— custom —</option>
+            </select>
+            <input type="text" class="shot-audio-custom custom-reveal" placeholder="Describe sound or dialogue...">
+          </div>
+        </div>
+      </div>
+
+      <div class="shot-section-title">Dialogue</div>
+      <div class="field-row">
+        <div class="field" style="max-width:160px;">
+          <label>Speaker</label>
+          <input type="text" class="shot-dialogue-speaker" placeholder="e.g. the woman">
+        </div>
+        <div class="field" style="flex:2;">
+          <label>Line</label>
+          <input type="text" class="shot-dialogue-line" placeholder="e.g. You said this would be the last time.">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="flex-direction:row; align-items:center; gap:8px;">
+          <input type="checkbox" class="shot-dialogue-subtitles" id="subtitles-${id}" style="width:auto; accent-color:var(--violet); cursor:pointer;">
+          <label for="subtitles-${id}" style="text-transform:none; font-size:12px; color:var(--text-dim); letter-spacing:0; cursor:pointer;">Show matching subtitles on screen</label>
+        </div>
+      </div>
+      <p class="field-note">Leave blank for non-talking shots. Add one row per speaker by duplicating this shot for multi-line exchanges.</p>
+    `;
+    document.getElementById('shotList').appendChild(card);
+
+    // apply mode camera bias as a starting suggestion (user can still change it)
+    if(modeDef && modeDef.camera){
+      const camSelect = card.querySelector('.shot-camera-select');
+      const matchingOption = Array.from(camSelect.options).find(o => o.value === modeDef.camera);
+      if(matchingOption){
+        camSelect.value = modeDef.camera;
+      }
+    }
+
+    // wire every select-with-custom-reveal pair generically
+    card.querySelectorAll('select').forEach(sel => {
+      const wrap = sel.closest('.field');
+      const customInput = wrap ? wrap.querySelector('.custom-reveal') : null;
+      sel.addEventListener('change', ()=>{
+        if(customInput){
+          customInput.classList.toggle('show', sel.value === 'custom');
+        }
+        renderOutput();
+      });
+    });
+    card.querySelectorAll('input[type=text], input[type=number]').forEach(inp => {
+      inp.addEventListener('input', renderOutput);
+    });
+    const subtitleCheckbox = card.querySelector('.shot-dialogue-subtitles');
+    if(subtitleCheckbox){
+      subtitleCheckbox.addEventListener('change', renderOutput);
+    }
+
+    // choreography / transformation preset — auto-fills subject, camera, mood, audio
+    const presetSelect = card.querySelector('.shot-preset-select');
+    const presetNote = card.querySelector('.shot-preset-note');
+    function setFieldOrCustom(selectClass, customClass, value){
+      const sel = card.querySelector('.' + selectClass);
+      const custom = card.querySelector('.' + customClass);
+      if(!sel) return;
+      const matching = Array.from(sel.options).find(o => o.value === value);
+      if(matching){
+        sel.value = value;
+        if(custom) custom.classList.remove('show');
+      } else if(custom){
+        sel.value = 'custom';
+        custom.value = value;
+        custom.classList.add('show');
+      }
+    }
+    presetSelect.addEventListener('change', ()=>{
+      const val = presetSelect.value;
+      if(!val){
+        presetNote.style.display = 'none';
+        return;
+      }
+      const [lib, key] = val.split(':');
+      const preset = (lib === 'fight' ? FIGHT_PRESETS : TRANSFORM_PRESETS)[key];
+      if(!preset) return;
+      card.querySelector('.shot-subject').value = preset.subject;
+      setFieldOrCustom('shot-camera-select', 'shot-camera-custom', preset.camera);
+      setFieldOrCustom('shot-mood-select', 'shot-mood-custom', preset.mood);
+      setFieldOrCustom('shot-audio-select', 'shot-audio-custom', preset.audio);
+      presetNote.textContent = preset.note;
+      presetNote.style.display = 'block';
+      renderOutput();
+    });
+
+    // duration presets
+    const durInput = card.querySelector('.shot-dur');
+    card.querySelectorAll('.dpreset').forEach(btn => {
+      btn.addEventListener('click', ()=>{
+        durInput.value = btn.getAttribute('data-dur');
+        renderOutput();
+      });
+    });
+
+    card.querySelector('.shot-remove').addEventListener('click', ()=>{
+      card.remove();
+      state.shots = state.shots.filter(s => s !== id);
+      renumberShots();
+      renderOutput();
+    });
+    renderOutput();
+  }
+  document.getElementById('addShot').addEventListener('click', ()=>{
+    if(state.mode === 'single' && state.shots.length >= 1){
+      applyMode('multi');
+    }
+    addShot();
+  });
+  document.getElementById('clearShots').addEventListener('click', ()=>{
+    document.getElementById('shotList').innerHTML = '';
+    state.shots = [];
+    renderOutput();
+  });
+
+  function renumberShots(){
+    document.querySelectorAll('.shot-card').forEach((card, i)=>{
+      card.querySelector('.n').textContent = 'SHOT ' + (i+1);
+    });
+  }
+
+  // ===== Build style line =====
+  function getStyleLine(){
+    const custom = document.getElementById('customStyle').value.trim();
+    if(custom) return custom;
+    const stockSel = document.getElementById('stock');
+    const gradeSel = document.getElementById('grade');
+    const stockVal = stockSel.value === 'custom' ? '' : stockSel.value;
+    const gradeVal = gradeSel.value;
+    return [stockVal, gradeVal].filter(Boolean).join(', ');
+  }
+
+  function getActiveNegFlags(){
+    return Array.from(document.querySelectorAll('#negFlags .chip.active')).map(c => c.getAttribute('data-val'));
+  }
+
+  function totalDuration(){
+    let t = 0;
+    document.querySelectorAll('.shot-dur').forEach(inp => t += (parseFloat(inp.value) || 0));
+    return t;
+  }
+
+  function getFieldValue(card, selectClass, customClass){
+    const sel = card.querySelector('.' + selectClass);
+    if(!sel) return '';
+    if(sel.value === 'custom'){
+      const custom = card.querySelector('.' + customClass);
+      return custom ? custom.value.trim() : '';
+    }
+    return sel.value;
+  }
+
+  function renderOutput(){
+    const aspect = document.getElementById('aspect').value;
+    const styleLine = getStyleLine();
+    const shotCards = Array.from(document.querySelectorAll('.shot-card'));
+    const dur = totalDuration();
+    const refs = Array.from(document.querySelectorAll('#refList > div'));
+    const negFlags = getActiveNegFlags();
+
+    const outEl = document.getElementById('output');
+
+    if(shotCards.length === 0){
+      outEl.innerHTML = '<span class="ghost-text">Your assembled Seedance 2.0 prompt will appear here as you build the slate on the left. Start by locking your continuity style, then add at least one shot.</span>';
+      updateMeter('');
+      updateLeader(0,0);
+      return;
+    }
+
+    let lines = [];
+    const modeDef = MODES[state.mode] || MODES.single;
+    const structureLine = modeDef.structureLabel(shotCards.length, dur, aspect);
+    lines.push(`<span class="shotnum">${escapeHtml(structureLine)}</span>`);
+
+    if(styleLine){
+      lines.push(`<span class="gsl">${escapeHtml(styleLine)}.</span>`);
+    }
+
+    lines.push('');
+
+    shotCards.forEach((card, i) => {
+      const subject = card.querySelector('.shot-subject').value.trim();
+      const framing = getFieldValue(card, 'shot-framing-select', 'shot-framing-custom');
+      const cam = getFieldValue(card, 'shot-camera-select', 'shot-camera-custom');
+      const env = getFieldValue(card, 'shot-env-select', 'shot-env-custom');
+      const time = getFieldValue(card, 'shot-time-select', 'shot-time-custom');
+      const light = getFieldValue(card, 'shot-light-select', 'shot-lightstyle-custom');
+      const mood = getFieldValue(card, 'shot-mood-select', 'shot-mood-custom');
+      const audio = getFieldValue(card, 'shot-audio-select', 'shot-audio-custom');
+      const dlgSpeaker = card.querySelector('.shot-dialogue-speaker').value.trim();
+      const dlgLine = card.querySelector('.shot-dialogue-line').value.trim();
+      const dlgSubtitles = card.querySelector('.shot-dialogue-subtitles').checked;
+      const shotDur = card.querySelector('.shot-dur').value;
+
+      let prefix = shotCards.length > 1 ? `<span class="shotnum">Shot ${i+1} (${shotDur}s):</span> ` : '';
+
+      // main sentence: framing + subject + env + time
+      let bits = [];
+      if(framing) bits.push(capitalize(framing));
+      if(subject) bits.push((bits.length ? 'of ' : '') + subject);
+      let envBits = [env, time].filter(Boolean).join(', ');
+      if(envBits) bits.push('in ' + envBits);
+      let mainSentence = bits.join(' ');
+
+      let parts = [];
+      if(mainSentence) parts.push(mainSentence.trim().replace(/^./, c=>c.toUpperCase()) + '.');
+      if(cam) parts.push(capitalize(cam) + '.');
+      if(light) parts.push(capitalize(light) + '.');
+      if(mood) parts.push('The mood is ' + mood + '.');
+      if(audio) parts.push(capitalize(audio) + '.');
+      if(dlgLine){
+        const who = dlgSpeaker ? capitalize(dlgSpeaker) : 'The character';
+        parts.push(`${who} says: "${dlgLine}"`);
+        if(dlgSubtitles) parts.push('Subtitles appear on screen matching this line.');
+      }
+
+      if(parts.length){
+        lines.push(prefix + escapeHtml(parts.join(' ')));
+      }
+    });
+
+    if(refs.length){
+      lines.push('');
+      refs.forEach(r => {
+        const tag = r.querySelector('.ref-tag').value.trim();
+        const descSel = r.querySelector('.ref-desc-select');
+        const desc = descSel.value === 'custom'
+          ? r.querySelector('.ref-desc-custom').value.trim()
+          : descSel.value;
+        if(tag && desc){
+          lines.push(`Reference ${escapeHtml(tag)}'s ${escapeHtml(desc)}, maintain consistent features across all shots.`);
+        }
+      });
+    }
+
+    if(negFlags.length){
+      lines.push('');
+      lines.push(`<span class="negline">${escapeHtml(negFlags.join(', '))}.</span>`);
+    }
+
+    outEl.innerHTML = lines.join('\n');
+    updateMeter(getPlainTextPrompt());
+    updateLeader(dur, shotCards.length);
+  }
+
+  function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function getPlainTextPrompt(){
+    return document.getElementById('output').innerText;
+  }
+
+  function updateMeter(text){
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const fill = document.getElementById('meterFill');
+    const num = document.getElementById('meterNum');
+    const pct = Math.min(100, (words / 200) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('over', words > 200);
+    num.textContent = words + ' / 200';
+  }
+
+  function updateLeader(dur, shotCount){
+    const strip = document.getElementById('leaderStrip');
+    const totalSegs = 15;
+    const filled = Math.min(totalSegs, Math.round(dur));
+    let html = '';
+    for(let i=0;i<totalSegs;i++){
+      html += `<div class="leader-seg${i < filled ? ' filled' : ''}"></div>`;
+    }
+    strip.innerHTML = html;
+    const hint = document.getElementById('durationHint');
+    const modeDef = MODES[state.mode] || MODES.single;
+    if(dur === 0){
+      hint.textContent = '';
+    } else if(dur > 15){
+      hint.textContent = `⚠ ${dur}s exceeds the 15s single-generation cap — split into another scene and chain with Extend or Track Completion.`;
+      hint.style.color = 'var(--danger)';
+    } else if(shotCount > modeDef.maxShots){
+      hint.textContent = `⚠ ${modeDef.label} typically holds at ${modeDef.maxShots} shot${modeDef.maxShots>1?'s':''} — ${shotCount} may stretch past what one generation handles cleanly.`;
+      hint.style.color = 'var(--danger)';
+    } else if(dur < 8 && shotCount > 1){
+      hint.textContent = `Under 8s with ${shotCount} shots may not give Seedance enough room — consider one beat only, or raise total duration.`;
+      hint.style.color = 'var(--text-faint)';
+    } else {
+      hint.textContent = `${dur}s of ${shotCount} shot(s) — within the single-generation limit.`;
+      hint.style.color = 'var(--teal)';
+    }
+  }
+
+  // ===== Copy / Download =====
+  function confirmCopy(button, flashEl){
+    const originalText = button.textContent;
+    button.textContent = 'Copied ✓';
+    button.classList.add('confirmed');
+    button.disabled = true;
+    if(flashEl){
+      flashEl.classList.add('show');
+      setTimeout(()=> flashEl.classList.remove('show'), 1400);
+    }
+    setTimeout(()=>{
+      button.textContent = originalText;
+      button.classList.remove('confirmed');
+      button.disabled = false;
+    }, 1600);
+  }
+
+  function copyTextToClipboard(text, onSuccess){
+    navigator.clipboard.writeText(text).then(onSuccess).catch(()=>{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      onSuccess();
+    });
+  }
+
+  document.getElementById('copyBtn').addEventListener('click', ()=>{
+    const text = getPlainTextPrompt();
+    if(!text.trim()) return;
+    const btn = document.getElementById('copyBtn');
+    const flash = document.getElementById('copiedFlash');
+    copyTextToClipboard(text, ()=> confirmCopy(btn, flash));
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', ()=>{
+    const text = getPlainTextPrompt();
+    if(!text.trim()) return;
+    const blob = new Blob([text], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'seedance-shot-prompt.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // init with one ref + one shot for guidance
+  applyMode('single');
+  addShot();
+  renderOutput();
+
+  // ===== TAB SWITCHING =====
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+
+  // ===== IMAGE ANALYZER =====
+  let uploadedImageBase64 = null;
+  let uploadedImageMediaType = null;
+
+  const uploadZone = document.getElementById('uploadZone');
+  const imageInput = document.getElementById('imageInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const uploadPrompt = document.getElementById('uploadPrompt');
+  const imageActions = document.getElementById('imageActions');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const analyzerStatus = document.getElementById('analyzerStatus');
+
+  uploadZone.addEventListener('click', (e)=>{
+    if(e.target.id !== 'changeImageBtn') imageInput.click();
+  });
+  uploadZone.addEventListener('dragover', (e)=>{ e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', ()=> uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', (e)=>{
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    if(e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]);
+  });
+  imageInput.addEventListener('change', (e)=>{
+    if(e.target.files.length) handleImageFile(e.target.files[0]);
+  });
+  document.getElementById('changeImageBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    imageInput.click();
+  });
+
+  function handleImageFile(file){
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const dataUrl = e.target.result;
+      uploadedImageBase64 = dataUrl.split(',')[1];
+      uploadedImageMediaType = file.type;
+      imagePreview.src = dataUrl;
+      imagePreview.style.display = 'block';
+      uploadPrompt.style.display = 'none';
+      imageActions.style.display = 'flex';
+      analyzeBtn.disabled = false;
+      analyzerStatus.textContent = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ===== LAST FRAME (optional, for Transformation mode) =====
+  let lastFrameBase64 = null;
+  let lastFrameMediaType = null;
+
+  const lastFrameCol = document.getElementById('lastFrameCol');
+  const lastFrameHint = document.getElementById('lastFrameHint');
+  const lastFrameUploadZone = document.getElementById('lastFrameUploadZone');
+  const lastFrameInput = document.getElementById('lastFrameInput');
+  const lastFramePreview = document.getElementById('lastFramePreview');
+  const lastFramePrompt = document.getElementById('lastFramePrompt');
+  const lastFrameActions = document.getElementById('lastFrameActions');
+  const dualUploadEl = document.querySelector('.dual-upload');
+
+  lastFrameUploadZone.addEventListener('click', (e)=>{
+    if(e.target.id !== 'changeLastFrameBtn' && e.target.id !== 'removeLastFrameBtn') lastFrameInput.click();
+  });
+  lastFrameUploadZone.addEventListener('dragover', (e)=>{ e.preventDefault(); lastFrameUploadZone.classList.add('drag-over'); });
+  lastFrameUploadZone.addEventListener('dragleave', ()=> lastFrameUploadZone.classList.remove('drag-over'));
+  lastFrameUploadZone.addEventListener('drop', (e)=>{
+    e.preventDefault();
+    lastFrameUploadZone.classList.remove('drag-over');
+    if(e.dataTransfer.files.length) handleLastFrameFile(e.dataTransfer.files[0]);
+  });
+  lastFrameInput.addEventListener('change', (e)=>{
+    if(e.target.files.length) handleLastFrameFile(e.target.files[0]);
+  });
+  document.getElementById('changeLastFrameBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    lastFrameInput.click();
+  });
+  document.getElementById('removeLastFrameBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    lastFrameBase64 = null;
+    lastFrameMediaType = null;
+    lastFramePreview.src = '';
+    lastFramePreview.style.display = 'none';
+    lastFramePrompt.style.display = 'block';
+    lastFrameActions.style.display = 'none';
+  });
+
+  function handleLastFrameFile(file){
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const dataUrl = e.target.result;
+      lastFrameBase64 = dataUrl.split(',')[1];
+      lastFrameMediaType = file.type;
+      lastFramePreview.src = dataUrl;
+      lastFramePreview.style.display = 'block';
+      lastFramePrompt.style.display = 'none';
+      lastFrameActions.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ===== TRANSFORMATION TYPE DROPDOWN (mirrors Tab 1's TRANSFORM_PRESETS) =====
+  const analyzerModeSelect = document.getElementById('analyzerMode');
+  const analyzerTransformRow = document.getElementById('analyzerTransformRow');
+  const analyzerTransformType = document.getElementById('analyzerTransformType');
+  const analyzerTransformNote = document.getElementById('analyzerTransformNote');
+
+  analyzerTransformType.innerHTML = Object.entries(TRANSFORM_PRESETS)
+    .map(([k,v]) => `<option value="${k}">${v.label}</option>`)
+    .join('');
+
+  analyzerTransformType.addEventListener('change', ()=>{
+    const preset = TRANSFORM_PRESETS[analyzerTransformType.value];
+    if(preset && preset.note){
+      analyzerTransformNote.textContent = preset.note;
+      analyzerTransformNote.style.display = 'block';
+    } else {
+      analyzerTransformNote.style.display = 'none';
+    }
+  });
+
+  // ===== FIGHT / ACTION SEQUENCE TYPE DROPDOWN (mirrors Tab 1's FIGHT_PRESETS) =====
+  const analyzerFightRow = document.getElementById('analyzerFightRow');
+  const analyzerFightType = document.getElementById('analyzerFightType');
+  const analyzerFightNote = document.getElementById('analyzerFightNote');
+
+  analyzerFightType.innerHTML = Object.entries(FIGHT_PRESETS)
+    .map(([k,v]) => `<option value="${k}">${v.label}</option>`)
+    .join('');
+
+  analyzerFightType.addEventListener('change', ()=>{
+    const preset = FIGHT_PRESETS[analyzerFightType.value];
+    if(preset && preset.note){
+      analyzerFightNote.textContent = preset.note;
+      analyzerFightNote.style.display = 'block';
+    } else {
+      analyzerFightNote.style.display = 'none';
+    }
+  });
+
+  analyzerModeSelect.addEventListener('change', ()=>{
+    const isTransform = analyzerModeSelect.value === 'transform';
+    const isAction = analyzerModeSelect.value === 'action';
+    analyzerTransformRow.style.display = isTransform ? 'flex' : 'none';
+    analyzerFightRow.style.display = isAction ? 'flex' : 'none';
+    lastFrameCol.style.display = isTransform ? 'flex' : 'none';
+    lastFrameHint.style.display = isTransform ? 'none' : 'block';
+    dualUploadEl.classList.toggle('two-col', isTransform);
+    if(!isTransform){
+      analyzerTransformNote.style.display = 'none';
+    }
+    if(!isAction){
+      analyzerFightNote.style.display = 'none';
+    }
+  });
+
+  const analyzerOutputEl = document.getElementById('analyzerOutput');
+  const analysisCard = document.getElementById('analysisCard');
+  const analysisOutputEl = document.getElementById('analysisOutput');
+
+  document.getElementById('analyzeBtn').addEventListener('click', async ()=>{
+    if(!uploadedImageBase64){
+      analyzerStatus.textContent = 'Upload an image first.';
+      analyzerStatus.style.color = 'var(--danger)';
+      return;
+    }
+    const intent = document.getElementById('intentInput').value.trim();
+    if(!intent){
+      analyzerStatus.textContent = 'Add a brief line about what you want to do with this image.';
+      analyzerStatus.style.color = 'var(--danger)';
+      return;
+    }
+    const mode = document.getElementById('analyzerMode').value;
+    const aspect = document.getElementById('analyzerAspect').value;
+    const modeDef = MODES[mode] || MODES.multi;
+    const isTransform = mode === 'transform';
+    const isAction = mode === 'action';
+    const transformPreset = isTransform ? TRANSFORM_PRESETS[analyzerTransformType.value] : null;
+    const fightPreset = isAction ? FIGHT_PRESETS[analyzerFightType.value] : null;
+    const hasLastFrame = isTransform && !!lastFrameBase64;
+
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+    analyzerStatus.innerHTML = `<span class="spinner"></span>${hasLastFrame ? 'Comparing first and last frame...' : 'Reading composition, light, and color from the frame...'}`;
+    analyzerStatus.style.color = 'var(--text-faint)';
+    analyzerOutputEl.innerHTML = '<span class="ghost-text">Analyzing image and drafting your shot list...</span>';
+    analysisCard.style.display = 'none';
+
+    const transformInstruction = isTransform
+      ? `\n7. Transformation type requested: "${transformPreset ? transformPreset.label : 'unspecified'}"${transformPreset ? ` — ${transformPreset.note}` : ''}. Build the shot list around this transformation technique.`
+      + (hasLastFrame
+          ? ' A SECOND image is provided as the LAST FRAME — the state the subject ends in after transforming. Compare the first and last frame directly: identify exactly what changes (form, color, texture, pose, environment) and write the shot list as the bridge between them, ending on something that matches the last frame.'
+          : ' Only a first frame is provided — invent a plausible end state for the transformation that fits the chosen type and the user\'s intent.')
+      : '';
+
+    const fightInstruction = isAction
+      ? `\n7. Fight/action sequence type requested: "${fightPreset ? fightPreset.label : 'unspecified'}"${fightPreset ? ` — ${fightPreset.note}` : ''}. Build the choreography, camera coverage, and pacing of the shot list around this specific style — vary the camera angle every shot and never repeat the same framing twice in a row.`
+      : '';
+
+    const systemPrompt = `You are a cinematographer and Seedance 2.0 prompt engineer. You will be shown ${hasLastFrame ? 'two images (a first frame and a last frame)' : 'an image'} and a brief statement of user intent. Your job:
+1. Analyze the first frame in detail: mood, tone, lighting style, color grade, composition, time of day, subject, and any camera characteristics already implied by the framing.
+2. Using that analysis plus the user's intent, write a complete Seedance 2.0 prompt that EXTENDS this exact image into motion — treat the image as the literal first frame, don't redesign the subject or setting.
+3. Follow the official Seedance 2.0 structure: Subject -> Motion -> Environment -> Aesthetics -> Camera -> Audio.
+4. Mode requested: "${modeDef.label}". ${mode === 'single' || mode === 'continuous' ? 'Write exactly one shot.' : 'Write 3-6 numbered shots if appropriate for this mode, each 2-4 seconds, total duration under 15 seconds (single Seedance generation limit).'}
+5. Aspect ratio: ${aspect}.
+6. Carry one consistent style line (film stock / color grade) across every shot for continuity.${transformInstruction}${fightInstruction}
+
+Respond ONLY with valid JSON, no markdown fences, no preamble, in exactly this shape:
+{
+  "mood": "short phrase",
+  "tone": "short phrase",
+  "lighting": "short phrase describing lighting style and direction",
+  "colorGrade": "short phrase describing the color palette/grade",
+  "composition": "short phrase describing framing and composition",
+  "subject": "short phrase describing the main subject(s) in the image"${hasLastFrame ? ',\n  "transformationArc": "short phrase summarizing exactly what changes between first and last frame"' : ''},
+  "prompt": "the complete ready-to-paste Seedance 2.0 prompt as plain text, structured as: a structure line (shot count, duration, aspect ratio), then a style line, then numbered shots (if multi-shot), each describing subject+motion, environment, aesthetics, camera, audio in flowing sentences. Use \\n to separate lines."
+}`;
+
+    const intentText = isTransform
+      ? `My intent for this image: ${intent}\nTransformation type: ${transformPreset ? transformPreset.label : 'unspecified'}`
+      : isAction
+      ? `My intent for this image: ${intent}\nFight/action sequence type: ${fightPreset ? fightPreset.label : 'unspecified'}`
+      : `My intent for this image: ${intent}`;
+
+    const messageContent = [
+      { type: "image", source: { type: "base64", media_type: uploadedImageMediaType, data: uploadedImageBase64 } }
+    ];
+    if(hasLastFrame){
+      messageContent.push({ type: "image", source: { type: "base64", media_type: lastFrameMediaType, data: lastFrameBase64 } });
+      messageContent.push({ type: "text", text: "The first image above is the FIRST frame. The second image above is the LAST frame — the end state of the transformation." });
+    }
+    messageContent.push({ type: "text", text: intentText });
+
+    try{
+      const response = await fetch("/api/analyze-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1500,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: messageContent
+            }
+          ]
+        })
+      });
+      if(!response.ok){
+        let errDetail = '';
+        try{ const errBody = await response.json(); errDetail = errBody.error || JSON.stringify(errBody); }catch(e){}
+        throw new Error(`Server responded ${response.status}${errDetail ? ': ' + errDetail : ''}`);
+      }
+      const data = await response.json();
+      const textBlock = (data.content || []).find(b => b.type === 'text');
+      if(!textBlock){ throw new Error('No response content returned from server'); }
+      let cleaned = textBlock.text.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+      const parsed = JSON.parse(cleaned);
+
+      // render analysis grid
+      const fields = [
+        ['Mood', parsed.mood], ['Tone', parsed.tone], ['Lighting', parsed.lighting],
+        ['Color Grade', parsed.colorGrade], ['Composition', parsed.composition], ['Subject', parsed.subject]
+      ];
+      if(hasLastFrame && parsed.transformationArc){
+        fields.push(['Transformation Arc', parsed.transformationArc]);
+      }
+      analysisOutputEl.innerHTML = fields.map(([label, val]) => `
+        <div class="analysis-item">
+          <p class="a-label">${escapeHtml(label)}</p>
+          <p class="a-value">${escapeHtml(val || '—')}</p>
+        </div>
+      `).join('');
+      analysisCard.style.display = 'block';
+
+      // render prompt
+      analyzerOutputEl.innerHTML = escapeHtml(parsed.prompt || 'No prompt returned.').replace(/\n/g, '<br>');
+      analyzerStatus.textContent = 'Done — review the analysis and prompt, then copy or download.';
+      analyzerStatus.style.color = 'var(--teal)';
+    } catch(err){
+      console.error(err);
+      analyzerOutputEl.innerHTML = '<span class="ghost-text">Something went wrong while analyzing this image. Try again, or try a different image.</span>';
+      analyzerStatus.textContent = 'Analysis failed: ' + (err.message || 'please try again.');
+      analyzerStatus.style.color = 'var(--danger)';
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Analyze & Generate Prompt';
+    }
+  });
+
+  document.getElementById('copyAnalyzerBtn').addEventListener('click', ()=>{
+    const text = analyzerOutputEl.innerText;
+    if(!text.trim() || analyzerOutputEl.querySelector('.ghost-text')) return;
+    const btn = document.getElementById('copyAnalyzerBtn');
+    const flash = document.getElementById('copiedFlash2');
+    copyTextToClipboard(text, ()=> confirmCopy(btn, flash));
+  });
+
+  document.getElementById('downloadAnalyzerBtn').addEventListener('click', ()=>{
+    const text = analyzerOutputEl.innerText;
+    if(!text.trim() || analyzerOutputEl.querySelector('.ghost-text')) return;
+    const blob = new Blob([text], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'seedance-analyzed-prompt.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+})();
+</script>
+</body>
+</html>
